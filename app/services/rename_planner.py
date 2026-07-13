@@ -24,6 +24,26 @@ def _safe_number(value: int | str) -> str:
     return text
 
 
+def allocate_target_name(
+    number: int | str,
+    extension: str,
+    source_name: str,
+    occupied_names: set[str],
+) -> str:
+    """Pick the lowest free numbered name (1.jpg, 1-2.jpg, …) avoiding occupied names."""
+    safe = _safe_number(number)
+    occupied_keys = {canonical(name) for name in occupied_names}
+    source_key = canonical(source_name)
+    index = 1
+    while True:
+        suffix = "" if index == 1 else f"-{index}"
+        candidate = f"{safe}{suffix}{extension}"
+        key = canonical(candidate)
+        if key == source_key or key not in occupied_keys:
+            return candidate
+        index += 1
+
+
 def build_rename_plan(
     folder: Path,
     items: list[ScannedImage],
@@ -51,6 +71,27 @@ def build_rename_plan(
             and canonical(target) not in source_keys
         ):
             raise PlanConflictError(f"Target is occupied outside this plan: {target}")
+    return _assemble_plan(folder, ordered, targets)
+
+
+def build_single_rename_plan(
+    folder: Path,
+    item: ScannedImage,
+    final_number: int | str,
+    occupied_names: set[str],
+) -> RenamePlan:
+    """Plan renaming one image; target uses the next free slot for that number."""
+    target = allocate_target_name(
+        final_number, item.extension, item.original_name, occupied_names
+    )
+    return _assemble_plan(folder, [item], {item.id: target})
+
+
+def _assemble_plan(
+    folder: Path,
+    ordered: list[ScannedImage],
+    targets: dict[str, str],
+) -> RenamePlan:
     review_data = [(item.id, targets[item.id], item.sha256) for item in ordered]
     review_hash = hashlib.sha256(
         json.dumps(review_data, ensure_ascii=False, separators=(",", ":")).encode()

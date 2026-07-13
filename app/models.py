@@ -51,6 +51,7 @@ class ReviewItem(BaseModel):
     final_number: int | None = None
     explicitly_reviewed: bool = False
     duplicate_count: int = 1
+    renamed: bool = False
 
 
 class RenameEntry(FrozenModel):
@@ -143,3 +144,24 @@ class CommitRequest(BaseModel):
 class UndoRequest(BaseModel):
     folder_id: str
     manifest_id: str
+
+
+class ManualAssignment(BaseModel):
+    image_id: str = Field(min_length=1)
+    number: int = Field(gt=0)
+
+
+class ManualRenameRequest(BaseModel):
+    """Pure manual numbering: only assigned images are renamed."""
+
+    assignments: list[ManualAssignment] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def unique_assignments(self):
+        image_ids = [item.image_id for item in self.assignments]
+        numbers = [item.number for item in self.assignments]
+        if len(image_ids) != len(set(image_ids)):
+            raise ValueError("Each image can only have one number")
+        if len(numbers) != len(set(numbers)):
+            raise ValueError("Each number can only be used once")
+        return self

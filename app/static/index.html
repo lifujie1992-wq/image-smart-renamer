@@ -3,60 +3,106 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>图片智能命名</title>
+  <title>手动图片编号</title>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
   <main>
     <header>
-      <p class="eyebrow">LOCAL · REVIEW FIRST</p>
-      <h1>图片智能命名</h1>
-      <p class="lead">Claude 负责看图建议，你负责最终编号。确认预演前，不会改动任何原图。</p>
+      <p class="eyebrow">MANUAL · FAST RENAME</p>
+      <h1>手动图片编号</h1>
+      <p class="lead">从文件夹挑图，点一下编上 1–20，确认后原地改名。不调用模型，纯手动。</p>
     </header>
 
     <section class="panel" id="setup-panel">
-      <div class="section-head"><span>01</span><div><h2>定义编号规则</h2><p>描述编号对应的主体、场景、风格或特征。</p></div></div>
-      <div class="template-tools">
-        <label><span>规则模板</span><select id="template-select"><option value="">未保存草稿</option></select></label>
-        <label><span>模板名称</span><input id="template-name" placeholder="例如：鞋子主图"></label>
-        <div class="template-actions">
-          <button class="secondary" id="save-template" type="button">保存为新模板</button>
-          <button class="secondary" id="update-template" type="button" disabled>覆盖当前模板</button>
-          <button class="remove" id="delete-template" type="button" disabled>删除模板</button>
+      <div class="section-head">
+        <span>01</span>
+        <div>
+          <h2>准备</h2>
+          <p>设定编号范围，选择本机图片文件夹（当前层，JPG/PNG/WebP）。</p>
         </div>
-        <small id="draft-status">正在恢复规则…</small>
       </div>
-      <div id="rules"></div>
-      <button class="secondary" id="add-rule" type="button">＋ 添加规则</button>
-      <div class="folder-row">
-        <button id="choose-folder" type="button">选择图片文件夹</button>
-        <div><strong id="folder-name">尚未选择</strong><small id="folder-count">在当前电脑选择 · 只扫描当前层 · 推荐 Chrome/Edge</small></div>
+      <div class="setup-row">
+        <label class="field">
+          <span>编号范围</span>
+          <div class="inline">
+            <span>1 到</span>
+            <input id="max-number" type="number" min="1" max="200" value="20">
+          </div>
+        </label>
+        <div class="folder-row">
+          <button id="choose-folder" type="button">选择图片文件夹</button>
+          <div>
+            <strong id="folder-name">尚未选择</strong>
+            <small id="folder-count">推荐 Chrome / Edge · 只扫描当前层</small>
+          </div>
+        </div>
       </div>
-      <button id="start" type="button" disabled>开始识别</button>
     </section>
 
-    <section class="panel hidden" id="review-panel">
-      <div class="section-head"><span>02</span><div><h2>审核识别结果</h2><p id="progress">正在识别…</p></div></div>
-      <div class="filters" id="filters">
-        <button class="active" data-filter="all">全部</button>
-        <button data-filter="review">待确认</button>
-        <button data-filter="failed">API 失败</button>
-        <button data-filter="duplicate">重复图片</button>
+    <section class="panel hidden" id="work-panel">
+      <div class="section-head">
+        <span>02</span>
+        <div>
+          <h2>点图编号</h2>
+          <p id="progress">尚未编号</p>
+        </div>
       </div>
-      <div id="cards" class="cards"></div>
-      <button id="make-plan" type="button">生成改名预演</button>
+
+      <div class="toolbar">
+        <div class="modes" id="modes">
+          <button type="button" class="active" data-mode="sequence">点图按序编号</button>
+          <button type="button" data-mode="pick">先选号再点图</button>
+        </div>
+        <div class="toolbar-actions">
+          <button type="button" class="secondary" id="clear-all">清空编号</button>
+          <button type="button" class="secondary" id="change-folder">重选文件夹</button>
+        </div>
+      </div>
+
+      <div class="number-strip-wrap">
+        <div class="number-strip" id="number-strip" aria-label="编号条"></div>
+      </div>
+      <p class="hint" id="mode-hint">点击图片：自动分配最小空号；再点一次取消。</p>
+
+      <div class="gallery" id="gallery"></div>
+
+      <div class="sticky-bar">
+        <div>
+          <strong id="sticky-count">0 / 20</strong>
+          <span id="sticky-detail">还没选图</span>
+        </div>
+        <button type="button" id="rename-btn" disabled>预览并改名</button>
+      </div>
     </section>
 
     <section class="panel hidden" id="plan-panel">
-      <div class="section-head"><span>03</span><div><h2>确认改名预演</h2><p>原地重命名，不删除图片；提交后可撤销最近一次操作。</p></div></div>
+      <div class="section-head">
+        <span>03</span>
+        <div>
+          <h2>确认改名</h2>
+          <p>原地重命名，不删除原图。确认名单无误后再执行。</p>
+        </div>
+      </div>
       <div id="plan-list" class="plan-list"></div>
-      <div class="warning"><strong>提交前最后确认</strong><span id="confirm-copy"></span></div>
-      <div class="actions"><button class="secondary" id="back-review">返回审核</button><button id="commit">确认原地改名</button></div>
+      <div class="actions">
+        <button type="button" class="secondary" id="back-work">返回继续选</button>
+        <button type="button" id="commit-btn">确认原地改名</button>
+      </div>
     </section>
 
     <section class="panel hidden" id="done-panel">
-      <div class="section-head"><span>04</span><div><h2>操作完成</h2><p id="done-copy"></p></div></div>
-      <button class="secondary" id="undo">撤销最近一次改名</button>
+      <div class="section-head">
+        <span>04</span>
+        <div>
+          <h2>完成</h2>
+          <p id="done-copy"></p>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="secondary" id="continue-btn">继续编剩余图片</button>
+        <button type="button" id="restart-btn">重新开始</button>
+      </div>
     </section>
 
     <p id="message" role="status"></p>

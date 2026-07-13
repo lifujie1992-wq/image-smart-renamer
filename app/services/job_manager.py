@@ -20,6 +20,7 @@ class Job:
     folder_identity: tuple[int, int]
     status: str = "processing"
     plan: object | None = None
+    item_plans: dict = field(default_factory=dict)
     task: asyncio.Task | None = field(default=None, repr=False)
 
 
