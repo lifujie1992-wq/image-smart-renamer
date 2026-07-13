@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>图片智能命名</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">LOCAL · REVIEW FIRST</p>
+      <h1>图片智能命名</h1>
+      <p class="lead">Claude 负责看图建议，你负责最终编号。确认预演前，不会改动任何原图。</p>
+    </header>
+
+    <section class="panel" id="setup-panel">
+      <div class="section-head"><span>01</span><div><h2>定义编号规则</h2><p>描述编号对应的主体、场景、风格或特征。</p></div></div>
+      <div class="template-tools">
+        <label><span>规则模板</span><select id="template-select"><option value="">未保存草稿</option></select></label>
+        <label><span>模板名称</span><input id="template-name" placeholder="例如：鞋子主图"></label>
+        <div class="template-actions">
+          <button class="secondary" id="save-template" type="button">保存为新模板</button>
+          <button class="secondary" id="update-template" type="button" disabled>覆盖当前模板</button>
+          <button class="remove" id="delete-template" type="button" disabled>删除模板</button>
+        </div>
+        <small id="draft-status">正在恢复规则…</small>
+      </div>
+      <div id="rules"></div>
+      <button class="secondary" id="add-rule" type="button">＋ 添加规则</button>
+      <div class="folder-row">
+        <button id="choose-folder" type="button">选择图片文件夹</button>
+        <div><strong id="folder-name">尚未选择</strong><small id="folder-count">在当前电脑选择 · 只扫描当前层 · 推荐 Chrome/Edge</small></div>
+      </div>
+      <button id="start" type="button" disabled>开始识别</button>
+    </section>
+
+    <section class="panel hidden" id="review-panel">
+      <div class="section-head"><span>02</span><div><h2>审核识别结果</h2><p id="progress">正在识别…</p></div></div>
+      <div class="filters" id="filters">
+        <button class="active" data-filter="all">全部</button>
+        <button data-filter="review">待确认</button>
+        <button data-filter="failed">API 失败</button>
+        <button data-filter="duplicate">重复图片</button>
+      </div>
+      <div id="cards" class="cards"></div>
+      <button id="make-plan" type="button">生成改名预演</button>
+    </section>
+
+    <section class="panel hidden" id="plan-panel">
+      <div class="section-head"><span>03</span><div><h2>确认改名预演</h2><p>原地重命名，不删除图片；提交后可撤销最近一次操作。</p></div></div>
+      <div id="plan-list" class="plan-list"></div>
+      <div class="warning"><strong>提交前最后确认</strong><span id="confirm-copy"></span></div>
+      <div class="actions"><button class="secondary" id="back-review">返回审核</button><button id="commit">确认原地改名</button></div>
+    </section>
+
+    <section class="panel hidden" id="done-panel">
+      <div class="section-head"><span>04</span><div><h2>操作完成</h2><p id="done-copy"></p></div></div>
+      <button class="secondary" id="undo">撤销最近一次改名</button>
+    </section>
+
+    <p id="message" role="status"></p>
+  </main>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

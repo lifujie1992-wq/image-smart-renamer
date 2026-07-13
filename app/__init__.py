@@ -1,0 +1,1 @@
+"""Image Smart Renamer application."""
